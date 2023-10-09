@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag and Fling Balls</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { background-color: #f4f4f4; display: block; }
+    </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let balls = [];
+    let isDragging = false;
+    let draggedBall = null;
+    let lastPosition = null;
+
+    class Ball {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.radius = 30;
+            this.velocityX = 0;
+            this.velocityY = 0;
+            this.color = `rgb(${Math.random()*255}, ${Math.random()*255}, ${Math.random()*255})`;
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        update() {
+            if (this !== draggedBall) {
+                this.x += this.velocityX;
+                this.y += this.velocityY;
+
+                // Simple boundary collision
+                if (this.x + this.radius > canvas.width || this.x - this.radius < 0) {
+                    this.velocityX = -this.velocityX;
+                }
+                if (this.y + this.radius > canvas.height || this.y - this.radius < 0) {
+                    this.velocityY = -this.velocityY;
+                }
+            }
+
+            this.draw();
+        }
+    }
+
+    function checkBallCollision(ballA, ballB) {
+        const dx = ballA.x - ballB.x;
+        const dy = ballA.y - ballB.y;
+        const distance = Math.sqrt(dx*dx + dy*dy);
+        return distance < ballA.radius + ballB.radius;
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+        const x = e.clientX;
+        const y = e.clientY;
+        let ballClicked = false;
+
+        for (let ball of balls) {
+            if (Math.sqrt((x - ball.x) ** 2 + (y - ball.y) ** 2) <= ball.radius) {
+                isDragging = true;
+                draggedBall = ball;
+                lastPosition = { x, y };
+                ballClicked = true;
+                break;
+            }
+        }
+
+        if (!ballClicked) {
+            const newBall = new Ball(x, y);
+            balls.push(newBall);
+        }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            const x = e.clientX;
+            const y = e.clientY;
+            
+            draggedBall.velocityX = (x - lastPosition.x) * 0.5;
+            draggedBall.velocityY = (y - lastPosition.y) * 0.5;
+
+            lastPosition = { x, y };
+        }
+    });
+
+    canvas.addEventListener('mouseup', () => {
+        if (isDragging) {
+            isDragging = false;
+            draggedBall = null;
+        }
+    });
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < balls.length; i++) {
+            for (let j = i+1; j < balls.length; j++) {
+                if (checkBallCollision(balls[i], balls[j])) {
+                    // Simple swap of velocities for collision effect
+                    [balls[i].velocityX, balls[j].velocityX] = [balls[j].velocityX, balls[i].velocityX];
+                    [balls[i].velocityY, balls[j].velocityY] = [balls[j].velocityY, balls[i].velocityY];
+                }
+            }
+            balls[i].update();
+        }
+        requestAnimationFrame(animate);
+    }
+
+    animate();
+</script>
+</body>
+</html>
