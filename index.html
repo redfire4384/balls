@@ -31,6 +31,8 @@
             this.radius = 30;
             this.velocityX = 0;
             this.velocityY = 0;
+            this.gravity = 0.5;
+            this.friction = 0.8;
             this.color = `rgb(${Math.random()*255}, ${Math.random()*255}, ${Math.random()*255})`;
         }
 
@@ -47,12 +49,18 @@
                 this.x += this.velocityX;
                 this.y += this.velocityY;
 
-                // Simple boundary collision
+                this.velocityY += this.gravity;
+
+                // Simple boundary collision with friction
                 if (this.x + this.radius > canvas.width || this.x - this.radius < 0) {
-                    this.velocityX = -this.velocityX;
+                    this.velocityX = -this.velocityX * this.friction;
                 }
-                if (this.y + this.radius > canvas.height || this.y - this.radius < 0) {
-                    this.velocityY = -this.velocityY;
+                if (this.y + this.radius > canvas.height) {
+                    this.y = canvas.height - this.radius;
+                    this.velocityY = -this.velocityY * this.friction;
+                } else if (this.y - this.radius < 0) {
+                    this.y = this.radius;
+                    this.velocityY = -this.velocityY * this.friction;
                 }
             }
 
