@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag and Fling Ball</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { background-color: #f4f4f4; display: block; }
+    </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let ball = null;
+    let isDragging = false;
+    let lastPosition = null;
+
+    class Ball {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.radius = 30;
+            this.velocityY = 0;
+            this.gravity = 0.5;
+            this.friction = 0.98;
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#3498db';
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        update() {
+            if (!isDragging) {
+                this.y += this.velocityY;
+                this.velocityY += this.gravity;
+                
+                if (this.y + this.radius > canvas.height) {
+                    this.y = canvas.height - this.radius;
+                    this.velocityY = -(this.velocityY * this.friction);
+                }
+            }
+            this.draw();
+        }
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+        const x = e.clientX;
+        const y = e.clientY;
+
+        if (ball && (Math.sqrt((x - ball.x) ** 2 + (y - ball.y) ** 2) <= ball.radius)) {
+            isDragging = true;
+            lastPosition = { x, y };
+        } else {
+            ball = new Ball(x, y);
+        }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            const x = e.clientX;
+            const y = e.clientY;
+            
+            const dx = x - lastPosition.x;
+            const dy = y - lastPosition.y;
+
+            ball.x += dx;
+            ball.y += dy;
+
+            lastPosition = { x, y };
+        }
+    });
+
+    canvas.addEventListener('mouseup', () => {
+        if (isDragging) {
+            isDragging = false;
+        }
+    });
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (ball) {
+            ball.update();
+        }
+        requestAnimationFrame(animate);
+    }
+
+    animate();
+</script>
+</body>
+</html>
